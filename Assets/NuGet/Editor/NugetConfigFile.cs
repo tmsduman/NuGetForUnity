@@ -203,7 +203,12 @@ namespace NugetForUnity
                 var adds = packageSources.Elements("add");
                 foreach (var add in adds)
                 {
-                    configFile.PackageSources.Add(new NugetPackageSource(add.Attribute("key").Value, add.Attribute("value").Value));
+                    int protocolVersion = add.Attribute("protocolVersion") != null
+                        ? int.TryParse(add.Attribute("protocolVersion").Value, out int version)
+                            ? version
+                            : 2
+                        : 2;
+                    configFile.PackageSources.Add(new NugetPackageSource(add.Attribute("key").Value, add.Attribute("value").Value, protocolVersion));
                 }
             }
 

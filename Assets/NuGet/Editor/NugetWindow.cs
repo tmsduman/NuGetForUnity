@@ -309,7 +309,7 @@
         /// </summary>
         private void OnEnable()
         {
-            Refresh(false);
+            Refresh(true);
         }
 
         private void Refresh(bool forceFullRefresh)
@@ -931,7 +931,7 @@
                         summary = string.Format("{0} - {1}", package.Title, summary);
                     }
 
-                    if (summary.Length >= 240)
+                    if (summary?.Length >= 240)
                     {
                         summary = string.Format("{0}...", summary.Substring(0, 237));
                     }
