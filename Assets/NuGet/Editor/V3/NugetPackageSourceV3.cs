@@ -1,10 +1,7 @@
-﻿using NugetForUnity;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace NugetForUnity.V3
@@ -57,6 +54,13 @@ namespace NugetForUnity.V3
             }
         }
 
+        /// <summary>
+        /// Request packages from url and parse response data into packages
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
         protected override List<NugetPackage> RequestPackagesFromUrl(string url, string username, string password)
         {
             List<NugetPackage> packages = new List<NugetPackage>();
@@ -106,6 +110,13 @@ namespace NugetForUnity.V3
             return packages;
         }
 
+        /// <summary>
+        /// Request data from server and parse it a string
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
         private string GetDataFromUrlAsString(string url, string username, string password)
         {
             string responseData = string.Empty;
@@ -121,6 +132,15 @@ namespace NugetForUnity.V3
             return responseData;
         }
 
+        /// <summary>
+        /// V3 implementation of getting packages from online source
+        /// </summary>
+        /// <param name="searchTerm">The search term to use to filter packages. Defaults to the empty string.</param>
+        /// <param name="includeAllVersions">True to include older versions that are not the latest version.</param>
+        /// <param name="includePrerelease">True to include prerelease packages (alpha, beta, etc).</param>
+        /// <param name="numberToGet">The number of packages to fetch.</param>
+        /// <param name="numberToSkip">The number of packages to skip before fetching.</param>
+        /// <returns>The list of available packages.</returns>
         protected override List<NugetPackage> SearchOnline(string searchTerm = "", bool includeAllVersions = false, bool includePrerelease = false, int numberToGet = 15, int numberToSkip = 0)
         {
             string url = queryUrl;

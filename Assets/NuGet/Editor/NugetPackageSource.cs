@@ -242,6 +242,15 @@
             return this.SearchOnline(searchTerm, includeAllVersions, includePrerelease, numberToGet, numberToSkip);
         }
 
+        /// <summary>
+        /// V2 implementation of getting packages from online source
+        /// </summary>
+        /// <param name="searchTerm">The search term to use to filter packages. Defaults to the empty string.</param>
+        /// <param name="includeAllVersions">True to include older versions that are not the latest version.</param>
+        /// <param name="includePrerelease">True to include prerelease packages (alpha, beta, etc).</param>
+        /// <param name="numberToGet">The number of packages to fetch.</param>
+        /// <param name="numberToSkip">The number of packages to skip before fetching.</param>
+        /// <returns>The list of available packages.</returns>
         protected virtual List<NugetPackage> SearchOnline(string searchTerm = "", bool includeAllVersions = false, bool includePrerelease = false, int numberToGet = 15, int numberToSkip = 0)
         {
             //Example URL: "http://www.nuget.org/api/v2/Search()?$filter=IsLatestVersion&$orderby=Id&$skip=0&$top=30&searchTerm='newtonsoft'&targetFramework=''&includePrerelease=false";
@@ -394,6 +403,13 @@
             return packages;
         }
 
+        /// <summary>
+        /// Sends server request and parses the response into packages
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
         protected virtual List<NugetPackage> RequestPackagesFromUrl(string url, string username, string password)
         {
             using (Stream responseStream = GetDataFromUrl(url, username, password))
@@ -405,6 +421,13 @@
             }
         }
 
+        /// <summary>
+        /// Requests data from url
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
         protected Stream GetDataFromUrl(string url, string username, string password)
         {
             // Mono doesn't have a Certificate Authority, so we have to provide all validation manually.  Currently just accept anything.
