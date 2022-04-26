@@ -11,7 +11,9 @@ namespace NugetForUnity.V3
     {
         public string type;
 
-        public string authors;
+        public string registration;
+
+        public List<string> authors;
 
         public string id;
 
@@ -27,6 +29,16 @@ namespace NugetForUnity.V3
 
         public List<V3ResponseVersion> versions;
 
-        public string tags;
+        public List<string> tags;
+
+        public List<string> owners;
+
+        public string description;
+
+        public string iconUrl;
+        
+        public string licenseUrl;
+        
+        public string projectUrl;
     }
 }

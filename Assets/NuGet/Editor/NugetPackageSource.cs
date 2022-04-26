@@ -91,20 +91,17 @@
         /// </summary>
         public bool IsEnabled { get; set; }
 
-        public int Version { get; set; }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="NugetPackageSource"/> class.
         /// </summary>
         /// <param name="name">The name of the package source.</param>
         /// <param name="path">The path to the package source.</param>
-        public NugetPackageSource(string name, string path, int version = 2)
+        public NugetPackageSource(string name, string path)
         {
             Name = name;
             SavedPath = path;
             IsLocalPath = !ExpandedPath.StartsWith("http");
             IsEnabled = true;
-            Version = version;
         }
 
         /// <summary>
@@ -136,33 +133,7 @@
             }
             else
             {
-                if (this.Version == 2)
-                {
-                    // See here: http://www.odata.org/documentation/odata-version-2-0/uri-conventions/
-                    string url = string.Format("{0}FindPackagesById()?id='{1}'", ExpandedPath, package.Id);
-
-                    // Are we looking for a specific package?
-                    if (!package.HasVersionRange)
-                    {
-                        url = string.Format("{0}&$filter=Version eq '{1}'", url, package.Version);
-                    }
-
-                    try
-                    {
-                        foundPackages = GetPackagesFromUrl(url, UserName, ExpandedPassword);
-                    }
-                    catch (Exception e)
-                    {
-                        foundPackages = new List<NugetPackage>();
-                        Debug.LogErrorFormat("Unable to retrieve package list from {0}\n{1}", url, e.ToString());
-                    }
-                }
-                else
-                {
-                    return SearchV3(package.Id);
-                }
-
-                
+                foundPackages = FindPackagesByIdOnline(package);
             }
 
             if (foundPackages != null)
@@ -178,6 +149,28 @@
             }
 
             return foundPackages;
+        }
+
+        protected virtual List<NugetPackage> FindPackagesByIdOnline(NugetPackageIdentifier package)
+        {
+            // See here: http://www.odata.org/documentation/odata-version-2-0/uri-conventions/
+            string url = string.Format("{0}FindPackagesById()?id='{1}'", ExpandedPath, package.Id);
+
+            // Are we looking for a specific package?
+            if (!package.HasVersionRange)
+            {
+                url = string.Format("{0}&$filter=Version eq '{1}'", url, package.Version);
+            }
+
+            try
+            {
+                return GetPackagesFromUrl(url, UserName, ExpandedPassword);
+            }
+            catch (Exception e)
+            {
+                Debug.LogErrorFormat("Unable to retrieve package list from {0}\n{1}", url, e.ToString());
+                return new List<NugetPackage>();
+            }
         }
 
         /// <summary>
@@ -208,26 +201,22 @@
             }
             else
             {
-                string url;
-                if (this.Version == 2)
-                {
-                    url = string.Format("{0}Packages(Id='{1}',Version='{2}')", ExpandedPath, package.Id, package.Version);
-                }
-                else
-                {
-                    string path = ExpandedPath.Replace("index.json", string.Empty);
-                    url = string.Format("{0}metadata/{1}/{2}.json", path, package.Id, package.Version);
-                }
+                return GetSpecificPackageOnline(package);                
+            }
+        }
 
-                try
-                {
-                    return GetPackagesFromUrl(url, UserName, ExpandedPassword).First();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogErrorFormat("Unable to retrieve package from {0}\n{1}", url, e.ToString());
-                    return null;
-                }                
+        protected virtual NugetPackage GetSpecificPackageOnline(NugetPackageIdentifier package)
+        {
+            string url = string.Format("{0}Packages(Id='{1}',Version='{2}')", ExpandedPath, package.Id, package.Version);
+
+            try
+            {
+                return GetPackagesFromUrl(url, UserName, ExpandedPassword).First();
+            }
+            catch (Exception e)
+            {
+                Debug.LogErrorFormat("Unable to retrieve package from {0}\n{1}", url, e.ToString());
+                return null;
             }
         }
 
@@ -250,12 +239,10 @@
                 return GetLocalPackages(searchTerm, includeAllVersions, includePrerelease, numberToGet, numberToSkip);
             }
 
-            return this.Version == 2
-                ? this.SearchV2(searchTerm, includeAllVersions, includePrerelease, numberToGet, numberToSkip)
-                : this.SearchV3(searchTerm, includeAllVersions, includePrerelease, numberToGet, numberToSkip);
+            return this.SearchOnline(searchTerm, includeAllVersions, includePrerelease, numberToGet, numberToSkip);
         }
 
-        private List<NugetPackage> SearchV2(string searchTerm = "", bool includeAllVersions = false, bool includePrerelease = false, int numberToGet = 15, int numberToSkip = 0)
+        protected virtual List<NugetPackage> SearchOnline(string searchTerm = "", bool includeAllVersions = false, bool includePrerelease = false, int numberToGet = 15, int numberToSkip = 0)
         {
             //Example URL: "http://www.nuget.org/api/v2/Search()?$filter=IsLatestVersion&$orderby=Id&$skip=0&$top=30&searchTerm='newtonsoft'&targetFramework=''&includePrerelease=false";
 
@@ -308,37 +295,7 @@
             }
         }
 
-        private List<NugetPackage> SearchV3(string searchTerm = "", bool includeAllVersions = false, bool includePrerelease = false, int numberToGet = 15, int numberToSkip = 0)
-        {
-            //Example URL: "http://www.nuget.org/api/v2/Search()?$filter=IsLatestVersion&$orderby=Id&$skip=0&$top=30&searchTerm='newtonsoft'&targetFramework=''&includePrerelease=false";
-
-            string url = ExpandedPath.Replace("index.json", string.Empty);
-
-            // call the search method
-            url += "query?";
-
-            // apply the search term
-            url += string.Format("q={0}&", searchTerm);
-
-            // skip a certain number of entries
-            url += string.Format("skip={0}&", numberToSkip);
-
-            // show a certain number of entries
-            url += string.Format("take={0}&", numberToGet);
-
-            // should we include prerelease packages?
-            url += string.Format("prerelease={0}", includePrerelease.ToString().ToLower());
-                                  
-            try
-            {
-                return GetPackagesFromUrl(url, UserName, ExpandedPassword);
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogErrorFormat("Unable to retrieve package list from {0}\n{1}", url, e.ToString());
-                return new List<NugetPackage>();
-            }
-        }
+        
         /// <summary>
         /// Gets a list of all available packages from a local source (not a web server) that match the given filters.
         /// </summary>
@@ -417,15 +374,39 @@
         /// <param name="url"></param>
         /// <param name="password"></param>
         /// <returns></returns>
-        private List<NugetPackage> GetPackagesFromUrl(string url, string username, string password)
+        protected List<NugetPackage> GetPackagesFromUrl(string url, string username, string password)
         {
             NugetHelper.LogVerbose("Getting packages from: {0}", url);
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            List<NugetPackage> packages = new List<NugetPackage>();
+            List<NugetPackage> packages = RequestPackagesFromUrl(url, username, password);
 
+            foreach (var package in packages)
+            {
+                package.PackageSource = this;
+            }
+
+            stopwatch.Stop();
+            NugetHelper.LogVerbose("Retreived {0} packages in {1} ms", packages.Count, stopwatch.ElapsedMilliseconds);
+
+            return packages;
+        }
+
+        protected virtual List<NugetPackage> RequestPackagesFromUrl(string url, string username, string password)
+        {
+            using (Stream responseStream = GetDataFromUrl(url, username, password))
+            {
+                using (StreamReader streamReader = new StreamReader(responseStream))
+                {
+                    return NugetODataResponse.Parse(XDocument.Load(streamReader));
+                }
+            }
+        }
+
+        protected Stream GetDataFromUrl(string url, string username, string password)
+        {
             // Mono doesn't have a Certificate Authority, so we have to provide all validation manually.  Currently just accept anything.
             // See here: http://stackoverflow.com/questions/4926676/mono-webrequest-fails-with-https
 
@@ -435,66 +416,7 @@
             // add anonymous handler
             ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, policyErrors) => true;
 
-            using (Stream responseStream = NugetHelper.RequestUrl(url, username, password, timeOut: 5000))
-            {
-                using (StreamReader streamReader = new StreamReader(responseStream))
-                {
-                    if (this.Version == 2)
-                    {
-                        packages = NugetODataResponse.Parse(XDocument.Load(streamReader));
-                    }
-                    else
-                    {
-                        string json = streamReader.ReadToEnd();
-                        V3Response v3Response = UnityEngine.JsonUtility.FromJson<V3Response>(json);
-                        if (v3Response?.data != null)
-                        {
-                            foreach (V3ResponseData dataEntry in v3Response.data)
-                            {
-                                NugetPackage v3Package = new NugetPackage
-                                {
-                                    Authors = dataEntry.authors,
-                                    Id = dataEntry.id,
-                                    Title = dataEntry.title,
-                                    Summary = dataEntry.summary,
-                                    DownloadCount = dataEntry.totalDownloads,
-                                    Version = dataEntry.version,
-                                    DownloadUrl = string.Empty
-                                };
-
-                                packages.Add(v3Package);
-                            }
-                        }
-                        else
-                        {
-                            V3MetaResponse v3MetaResponse = UnityEngine.JsonUtility.FromJson<V3MetaResponse>(json);
-                            if (v3MetaResponse?.catalogEntry != null)
-                            {
-                                NugetPackage v3MetaPackage = new NugetPackage
-                                {
-                                    Id = v3MetaResponse.catalogEntry.id,
-                                    Authors = v3MetaResponse.catalogEntry.authors,
-                                    Version = v3MetaResponse.catalogEntry.version,
-                                    Summary = v3MetaResponse.catalogEntry.summary,
-                                    DownloadUrl = v3MetaResponse.catalogEntry.packageContent
-                                };
-
-                                packages.Add(v3MetaPackage);
-                            }
-                        }
-                    }
-
-                    foreach (var package in packages)
-                    {
-                        package.PackageSource = this;
-                    }
-                }
-            }
-
-            stopwatch.Stop();
-            NugetHelper.LogVerbose("Retreived {0} packages in {1} ms", packages.Count, stopwatch.ElapsedMilliseconds);
-
-            return packages;
+            return NugetHelper.RequestUrl(url, username, password, timeOut: 5000);
         }
 
         /// <summary>

@@ -2,6 +2,7 @@ using System.Xml;
 
 namespace NugetForUnity
 {
+    using NugetForUnity.V3;
     using System;
     using System.Collections.Generic;
     using System.IO;
@@ -208,7 +209,14 @@ namespace NugetForUnity
                             ? version
                             : 2
                         : 2;
-                    configFile.PackageSources.Add(new NugetPackageSource(add.Attribute("key").Value, add.Attribute("value").Value, protocolVersion));
+
+                    switch (protocolVersion)
+                    {
+                        case 2: configFile.PackageSources.Add(new NugetPackageSource(add.Attribute("key").Value, add.Attribute("value").Value));
+                                break;
+                        case 3: configFile.PackageSources.Add(new NugetPackageSourceV3(add.Attribute("key").Value, add.Attribute("value").Value));
+                            break;
+                    }
                 }
             }
 
