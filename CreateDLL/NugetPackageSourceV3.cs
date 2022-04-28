@@ -40,8 +40,8 @@ namespace NugetForUnity.V3
         }
 
         protected override NugetPackage GetSpecificPackageOnline(NugetPackageIdentifier package)
-        {
-            string url = Path.Combine(metaDataUrl, package.Id.ToLower(), package.Version + ".json").Replace("\\", "/");
+        {            
+            string url = string.Format("{0}/{1}/{2}.json", metaDataUrl, package.Id, package.Version);
 
             try
             {
@@ -88,48 +88,24 @@ namespace NugetForUnity.V3
 
                     packages.Add(v3Package);
                 }
-
-                return packages;
             }
-
-            V3MetaResponseGZip v3MetaResponseGZip = JsonUtility.FromJson<V3MetaResponseGZip>(json);
-            if (v3MetaResponseGZip?.catalogEntry?.packageContent != null)
+            else
             {
-                NugetPackage v3MetaPackage = new NugetPackage
-                {
-                    Id = v3MetaResponseGZip.catalogEntry.id,
-                    Authors = string.Join(",", v3MetaResponseGZip.catalogEntry.authors),
-                    Version = v3MetaResponseGZip.catalogEntry.version,
-                    Summary = v3MetaResponseGZip.catalogEntry.summary,
-                    DownloadUrl = v3MetaResponseGZip.catalogEntry.packageContent
-                };
-
-                packages.Add(v3MetaPackage);
-                return packages;
-            }
-
-            V3MetaResponse v3MetaResponse = JsonUtility.FromJson<V3MetaResponse>(json);
-            if (v3MetaResponse?.catalogEntry != null && v3MetaResponse?.packageContent != null)
-            {
-                string catalogJson = GetDataFromUrlAsString(v3MetaResponse?.catalogEntry, username, password);
-                V3ResponseData v3ResponseData = JsonUtility.FromJson<V3ResponseData>(catalogJson);
-
-                if (v3ResponseData?.id != null)
+                V3MetaResponse v3MetaResponse = JsonUtility.FromJson<V3MetaResponse>(json);
+                if (v3MetaResponse?.catalogEntry != null)
                 {
                     NugetPackage v3MetaPackage = new NugetPackage
                     {
-                        Id = v3ResponseData.id,
-                        Authors = string.Join(",", v3ResponseData.authors),
-                        Version = v3ResponseData.version,
-                        Summary = v3ResponseData.summary,
-                        DownloadUrl = v3MetaResponse.packageContent
+                        Id = v3MetaResponse.catalogEntry.id,
+                        Authors = string.Join(",", v3MetaResponse.catalogEntry.authors),
+                        Version = v3MetaResponse.catalogEntry.version,
+                        Summary = v3MetaResponse.catalogEntry.summary,
+                        DownloadUrl = v3MetaResponse.catalogEntry.packageContent
                     };
 
                     packages.Add(v3MetaPackage);
-                    return packages;
-                }                
+                }
             }
-
 
             return packages;
         }

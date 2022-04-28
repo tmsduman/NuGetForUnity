@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 namespace NugetForUnity.V3
 {
     [Serializable]
-    public class V3MetaResponse
+    public class V3Response
     {
-        public string catalogEntry;
+        public int totalHits;
 
-        public string packageContent;
+        public List<V3ResponseData> data;
     }
 }

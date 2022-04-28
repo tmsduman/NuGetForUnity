@@ -9,8 +9,8 @@ namespace NugetForUnity.V3
     [Serializable]
     public class V3MetaResponse
     {
-        public string catalogEntry;
+        public string id;
 
-        public string packageContent;
+        public V3ResponseCatalogEntry catalogEntry;
     }
 }

@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 namespace NugetForUnity.V3
 {
     [Serializable]
-    public class V3MetaResponse
+    public class V3MetaResponseGZip
     {
-        public string catalogEntry;
+        public string id;
 
-        public string packageContent;
+        public V3ResponseCatalogEntryGzip catalogEntry;
     }
 }

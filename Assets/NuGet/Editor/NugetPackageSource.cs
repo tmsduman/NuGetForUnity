@@ -139,7 +139,7 @@
             if (foundPackages != null)
             {
                 // Return all the packages in the range of versions specified by 'package'.
-                foundPackages.RemoveAll(p => !package.InRange(p));
+                foundPackages.RemoveAll(p => !package.InRange(p) || !p.Id.Equals(package.Id));
                 foundPackages.Sort();
 
                 foreach (NugetPackage foundPackage in foundPackages)

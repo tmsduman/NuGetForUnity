@@ -7,10 +7,12 @@ using System.Threading.Tasks;
 namespace NugetForUnity.V3
 {
     [Serializable]
-    public class V3MetaResponse
+    public class V3IndexResource
     {
-        public string catalogEntry;
+        public string id;
 
-        public string packageContent;
+        public string type;
+
+        public string comment;
     }
 }
